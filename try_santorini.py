@@ -10,5 +10,10 @@ from utils import *
 
 game = SantoriniGame()
 rp = RandomPlayer(game).play
-arena = Arena.Arena(rp, rp, game, display=SantoriniGame.display)
-print("Player 1 won: {}, lost: {}, draws: {}".format(*arena.playGames(50, verbose=False)))
+neural_net = SantoriniPytorchNNet
+nnet = neural_net(game)
+mcts = MCTS(game, nnet, dotdict({'numMCTSSims': 25, 'cpuct': 1.0}))
+n1p = lambda x: np.argmax(mcts.getActionProb(x, temp=0))
+
+arena = Arena.Arena(n1p, rp, game, display=SantoriniGame.display)
+print("Player 1 won: {}, lost: {}, draws: {}".format(*arena.playGames(10, verbose=False)))
