@@ -94,6 +94,11 @@ class SantoriniGame(Game):
         board_s = "".join(self.square_content[square] for row in board for square in row)
         return board_s
 
+    def getScore(self, board, player: int):
+        b = Board(self.n, self.max_h)
+        b.pieces = np.copy(board)
+        return int(b.reached_top(player))
+
     @staticmethod
     def display(board):
         n = board.shape[0]
