@@ -26,7 +26,7 @@ class SantoriniGame(Game):
     def getInitBoard(self):
         # return initial board (numpy board)
         b = Board(self.n, self.max_h)
-        return np.array(b.pieces)
+        return b.pieces
 
     def getBoardSize(self):
         # (a,b) tuple
@@ -37,8 +37,7 @@ class SantoriniGame(Game):
         return self.n**2 * len(Board.directions)**2
 
     def getNextState(self, board, player, action_ind: int):
-        b = Board(self.n, self.max_h)
-        b.pieces = np.copy(board)
+        b = Board(self.n, self.max_h, board)
         action = Board.action_from_linear_ind(self.n, action_ind)
         b.execute_action(action, player)
         return b.pieces, -player
@@ -46,8 +45,7 @@ class SantoriniGame(Game):
     def getValidMoves(self, board, player):
         # return a fixed size binary vector
         valids = [0]*self.getActionSize()
-        b = Board(self.n, self.max_h)
-        b.pieces = np.copy(board)
+        b = Board(self.n, self.max_h, board)
         legal_actions = b.get_legal_actions(player)
         if len(legal_actions) == 0:
             return np.array(valids)
@@ -57,8 +55,7 @@ class SantoriniGame(Game):
 
     def getGameEnded(self, board, player):
         # return 0 if not ended, 1 if player 1 won, -1 if player 1 lost
-        b = Board(self.n, self.max_h)
-        b.pieces = np.copy(board)
+        b = Board(self.n, self.max_h, board)
         if b.reached_top(-player):
             return -1
         if not b.has_legal_actions(player):
@@ -95,8 +92,7 @@ class SantoriniGame(Game):
         return board_s
 
     def getScore(self, board, player: int):
-        b = Board(self.n, self.max_h)
-        b.pieces = np.copy(board)
+        b = Board(self.n, self.max_h, board)
         return int(b.reached_top(player))
 
     @staticmethod

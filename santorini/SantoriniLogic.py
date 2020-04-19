@@ -41,37 +41,42 @@ class Board:
         build_ind = np.argwhere([build_dir == direction for direction in Board.directions])
         return np.ravel_multi_index((y, x, move_ind, build_ind), shp, order='C')[0]
 
-    def __init__(self, n: int = 5, max_h: int = 4):
-        """Set up initial board configuration."""
+    def __init__(self, n: int = 5, max_h: int = 4, pieces=None):
         self.max_h = max_h
         self.n = n
         # Create the empty board array.
-        self.pieces = np.zeros((self.n, self.n, 2), dtype=np.int32)
+        self.players_locations = {+1: {(self.n-2, self.n-2), (1, 1)},
+                                  -1: {(self.n-2, 1), (self.n-2, 1)}}
+        self.height_map = np.zeros((self.n, self.n), dtype=np.int32)
 
-        # Set up the initial 4 pieces.
-        self.pieces[-2][-2][0] = 1
-        self.pieces[1][1][0] = 1
-        self.pieces[1][-2][0] = -1
-        self.pieces[-2][1][0] = -1
+        if pieces is not None:
+            assert pieces.shape == (self.n, self.n, 2)
+            self.height_map = np.copy(pieces[:, :, 1])
+            self.players_locations = {color: set([(x, y) for (y, x) in np.argwhere(pieces[:, :, 0] == color)]) for color in [-1, 1]}
+
+    @property
+    def pieces(self):
+        pcs = np.zeros((self.n, self.n, 2), dtype=np.int32)
+        for color, locs in self.players_locations.items():
+            for (x, y) in locs:
+                pcs[y][x][0] = color
+        pcs[:, :, 1] = np.copy(self.height_map)
+        return pcs
 
     def get_legal_actions(self, color: int) -> List[GameAction]:
         actions = set()  # stores the legal moves.
 
         # Get all the squares with pieces of the given color.
-        for y in range(self.n):
-            for x in range(self.n):
-                if self.pieces[y][x][0] == color:
-                    sq_actions = self.get_actions_from_square((x, y))
-                    actions.update(sq_actions)
+        for (x, y) in self.players_locations[color]:
+            sq_actions = self.get_actions_from_square((x, y))
+            actions.update(sq_actions)
         return list(actions)
 
     def has_legal_actions(self, color) -> bool:
-        for y in range(self.n):
-            for x in range(self.n):
-                if self.pieces[y][x][0] == color:
-                    sq_actions = self.get_actions_from_square((x, y))
-                    if len(sq_actions) > 0:
-                        return True
+        for (x, y) in self.players_locations[color]:
+            sq_actions = self.get_actions_from_square((x, y))
+            if len(sq_actions) > 0:
+                return True
         return False
 
     def get_actions_from_square(self, origin: Position) -> List[GameAction]:
@@ -88,25 +93,26 @@ class Board:
 
     def _get_actions_from_square_in_move_direction(self, origin: Position, move_dir: MoveDirection) -> List[GameAction]:
         x, y = origin
-        color, height = self.pieces[y][x]
+        pieces = self.pieces
+        color, height = pieces[y][x]
 
-        dest = tuple(list(map(sum, zip(origin, move_dir))))
+        dest = tuple(map(sum, zip(origin, move_dir)))
         if not all(map(lambda t: 0 <= t < self.n, dest)):
             return []
 
         dest_x, dest_y = dest
-        dest_color, dest_height = self.pieces[dest_y][dest_x]
+        dest_color, dest_height = pieces[dest_y][dest_x]
 
         if dest_color != 0 or dest_height > height + 1 or dest_height >= self.max_h:
             return []
 
         actions = []
         for build_dir in self.directions:
-            build = tuple(list(map(sum, zip(dest, build_dir))))
+            build = tuple(map(sum, zip(dest, build_dir)))
             build_x, build_y = build
             if not all(map(lambda t: 0 <= t < self.n, build)):
                 continue
-            build_color, build_height = self.pieces[build_y][build_x]
+            build_color, build_height = pieces[build_y][build_x]
             if (build != origin and build_color != 0) or build_height >= self.max_h:
                 continue
             actions.append((origin, move_dir, build_dir))
@@ -114,20 +120,16 @@ class Board:
 
     def execute_action(self, action: GameAction, color: int):
         origin, move_dir, build_dir = action
-        dest = tuple(list(map(sum, zip(origin, move_dir))))
-        build = tuple(list(map(sum, zip(dest, build_dir))))
+        dest = tuple(map(sum, zip(origin, move_dir)))
+        build = tuple(map(sum, zip(dest, build_dir)))
         x, y = origin
-        dest_x, dest_y = dest
         build_x, build_y = build
-        origin_color, origin_height = self.pieces[y][x]
-        assert color == origin_color
-        assert origin_height < self.max_h
-        self.pieces[y][x][0] = 0
-        self.pieces[dest_y][dest_x][0] = color
-        self.pieces[build_y][build_x][1] += 1
+        self.players_locations[color].remove(origin)
+        self.players_locations[color].add(dest)
+        self.height_map[build_y][build_x] += 1
 
     def reached_top(self, player: int):
-        b = np.copy(self.pieces)
-        b = b[:, :, 0] * b[:, :, 1] == player * (self.max_h - 1)
-        ans = np.any(b, keepdims=False)
-        return ans
+        for (x, y) in self.players_locations[player]:
+            if self.height_map[y][x] == self.max_h - 1:
+                return True
+        return False
