@@ -90,7 +90,7 @@ class Board:
         x, y = origin
         color, height = self.pieces[y][x]
 
-        dest = list(map(sum, zip(origin, move_dir)))
+        dest = tuple(list(map(sum, zip(origin, move_dir))))
         if not all(map(lambda t: 0 <= t < self.n, dest)):
             return []
 
@@ -102,20 +102,20 @@ class Board:
 
         actions = []
         for build_dir in self.directions:
-            build = list(map(sum, zip(dest, build_dir)))
+            build = tuple(list(map(sum, zip(dest, build_dir))))
             build_x, build_y = build
             if not all(map(lambda t: 0 <= t < self.n, build)):
                 continue
             build_color, build_height = self.pieces[build_y][build_x]
-            if (build != origin and build_color != 0) or build == origin or build_height >= self.max_h:
+            if (build != origin and build_color != 0) or build_height >= self.max_h:
                 continue
             actions.append((origin, move_dir, build_dir))
         return actions
 
     def execute_action(self, action: GameAction, color: int):
         origin, move_dir, build_dir = action
-        dest = list(map(sum, zip(origin, move_dir)))
-        build = list(map(sum, zip(dest, build_dir)))
+        dest = tuple(list(map(sum, zip(origin, move_dir))))
+        build = tuple(list(map(sum, zip(dest, build_dir))))
         x, y = origin
         dest_x, dest_y = dest
         build_x, build_y = build

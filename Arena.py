@@ -55,8 +55,8 @@ class Arena():
             result = curPlayer * self.game.getGameEnded(board, curPlayer)
         if verbose:
             assert(self.display)
-            print("Game over: Turn ", str(it), "Result ", str(result))
             self.display(board)
+            print("Game over: Turn ", str(it), "Result ", str(result))
         return result
 
     def playGames(self, num, verbose=False):
