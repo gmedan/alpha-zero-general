@@ -41,6 +41,16 @@ class Board:
         build_ind = np.argwhere([build_dir == direction for direction in Board.directions])
         return np.ravel_multi_index((y, x, move_ind, build_ind), shp, order='C')[0]
 
+    @staticmethod
+    def flip_action_lr(n: int, action: GameAction) -> GameAction:
+        origin, move_dir, build_dir = action
+        return (n-1-origin[0], origin[1]), (-move_dir[0], move_dir[1]), (-build_dir[0], build_dir[1])
+
+    # @staticmethod
+    # def rot_action_90ccw(n: int, action: GameAction) -> GameAction:
+    #     origin, move_dir, build_dir = action
+    #     return (n-1-origin[0], origin[1]), (-move_dir[0], move_dir[1]), (-build_dir[0], build_dir[1])
+
     def __init__(self, n: int = 5, max_h: int = 4, pieces=None):
         self.max_h = max_h
         self.n = n
