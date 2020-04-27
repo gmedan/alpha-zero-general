@@ -34,11 +34,11 @@ class SantoriniGame(Game):
 
     def getActionSize(self):
         # return number of actions
-        return self.n**2 * len(Board.directions)**2
+        return Board.get_action_size()
 
     def getNextState(self, board, player, action_ind: int):
         b = Board(self.n, self.max_h, board)
-        action = Board.action_from_linear_ind(self.n, action_ind)
+        action = Board.action_from_linear_ind(action_ind)
         b.execute_action(action, player)
         return b.pieces, -player
 
@@ -50,7 +50,7 @@ class SantoriniGame(Game):
         if len(legal_actions) == 0:
             return np.array(valids)
         for action in legal_actions:
-            valids[int(Board.linear_ind_from_action(self.n, action))] = 1
+            valids[int(Board.linear_ind_from_action(action))] = 1
         return np.array(valids)
 
     def getGameEnded(self, board, player):
@@ -98,6 +98,8 @@ class SantoriniGame(Game):
     @staticmethod
     def display(board):
         n = board.shape[0]
+        b = Board(n, 999, pieces=board)  # max_h not available but not important now
+
         print("   ", end="")
         for y in range(n):
             print(" {0} ".format(y), end=" ")
@@ -106,7 +108,8 @@ class SantoriniGame(Game):
         for y in range(n):
             print(y, "|", end="")    # print the row #
             for x in range(n):
-                color, height = board[y][x]    # get the piece to print
+                color = b.get_square_color(x, y)
+                height = b.get_square_height(x, y)
                 print("{1}{0}{1}".format(height, SantoriniGame.square_content[color]), end=" ")
             print("|")
 

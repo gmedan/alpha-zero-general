@@ -13,7 +13,7 @@ rp = RandomPlayer(game).play
 gp = GreedySantoriniPlayer(game).play
 neural_net = SantoriniPytorchNNet
 nnet = neural_net(game)
-nnet.load_checkpoint(folder='./temp/', filename='best.pth.tar')
+# nnet.load_checkpoint(folder='./temp/', filename='best.pth.tar')
 mcts = MCTS(game, nnet, dotdict({'numMCTSSims': 25, 'cpuct': 1.0}))
 n1p = lambda x: np.argmax(mcts.getActionProb(x, temp=0))
 
